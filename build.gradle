@@ -1,0 +1,72 @@
+plugins {
+    id 'java'
+}
+
+repositories {
+    mavenCentral()
+}
+
+/** Common (platform-agnostic) deps */
+configurations {
+    common
+    common.transitive = true
+    implementation.extendsFrom(common)
+}
+
+def jfxVersion = '21'
+def jfxPlatform = 'mac-aarch64'
+def platforms = ['win', 'linux', 'mac-aarch64']
+
+dependencies {
+    common 'com.google.code.gson:gson:2.13.1'
+
+    compileOnly "org.openjfx:javafx-base:${jfxVersion}:${jfxPlatform}"
+    compileOnly "org.openjfx:javafx-graphics:${jfxVersion}:${jfxPlatform}"
+    compileOnly "org.openjfx:javafx-controls:${jfxVersion}:${jfxPlatform}"
+}
+
+/** Create a configuration per platform and add the JavaFX artifacts with the right classifier */
+platforms.each { plat ->
+    configurations.create("jfx_${plat}") { transitive = true }
+
+    dependencies.add("jfx_${plat}", "org.openjfx:javafx-base:${jfxVersion}:${plat}")
+    dependencies.add("jfx_${plat}", "org.openjfx:javafx-graphics:${jfxVersion}:${plat}")
+    dependencies.add("jfx_${plat}", "org.openjfx:javafx-controls:${jfxVersion}:${plat}")
+
+    // Optional: add any other platform-specific libraries here
+}
+
+/** One fat-jar task per platform */
+platforms.each { plat ->
+    tasks.register("fatJar_${plat}", Jar) {
+        group = 'distribution'
+        description = "Builds a platform-specific fat JAR for ${plat}"
+
+        archiveBaseName.set("blockgame-launcher")
+        archiveClassifier.set(plat)    // e.g., blockgame-launcher-win.jar
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+        zip64 = true                   // JavaFX jars can be chunky
+
+        manifest {
+            attributes 'Main-Class': 'com.james090500.BlockGameLauncher.Main'
+        }
+
+        // include compiled classes/resources
+        from sourceSets.main.output
+
+        // include dependencies: common + platform-specific JavaFX
+        def deps = configurations.common + configurations.getByName("jfx_${plat}")
+        from {
+            deps.collect { it.isDirectory() ? it : zipTree(it) }
+        }
+
+        // Clean up signature files that can break fat jars
+        exclude 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA'
+    }
+}
+
+/** Convenience umbrella task: builds all three */
+tasks.register('fatJars') {
+    group = 'distribution'
+    dependsOn platforms.collect { "fatJar_${it}" }
+}

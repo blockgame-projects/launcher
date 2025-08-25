@@ -4,7 +4,6 @@ import com.james090500.BlockGameLauncher.libs.BlockGameDownloader;
 import com.james090500.BlockGameLauncher.libs.LWJGLDownloader;
 import com.james090500.BlockGameLauncher.libs.LibDownloader;
 import javafx.application.Application;
-import javafx.stage.Stage;
 
 import java.io.File;
 import java.io.IOException;
@@ -43,7 +42,7 @@ public class Main {
             throw new RuntimeException(e);
         }
 
-        Set<String> want = new LinkedHashSet<>(List.of("lwjgl", "lwjgl-opengl", "lwjgl-nanovg", "lwjgl-glfw", "lwjgl-stb"));
+        Set<String> want = new LinkedHashSet<>(List.of("lwjgl", "lwjgl-openal", "lwjgl-opengl", "lwjgl-nanovg", "lwjgl-glfw", "lwjgl-stb"));
         LWJGLDownloader.fetch(want, libDir);
         LibDownloader.downloadUrl("https://repo1.maven.org/maven2/org/joml/joml/1.9.9/joml-1.9.9.jar", libDir);
         LibDownloader.downloadUrl("https://repo1.maven.org/maven2/org/lz4/lz4-java/1.8.0/lz4-java-1.8.0.jar", libDir);

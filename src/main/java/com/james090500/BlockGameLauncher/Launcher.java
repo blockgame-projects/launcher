@@ -41,23 +41,6 @@ public class Launcher extends Application {
         root.getChildren().add(logo);
         StackPane.setAlignment(logo, Pos.TOP_CENTER);
 
-        // Add Label
-        Group grpVersion = new Group();
-        grpVersion.getChildren().add(createText("Choose a version", 24));
-
-        // Dropdown
-        ComboBox<String> dropdown = new ComboBox<>();
-        dropdown.getItems().add("Latest");
-        dropdown.getItems().addAll(Main.versions);
-        dropdown.setValue("Latest");
-
-        dropdown.setOnAction(e -> {
-            Main.selectedVersion = dropdown.getValue();
-        });
-        grpVersion.getChildren().add(dropdown);
-
-        root.getChildren().add(grpVersion);
-
         currentTask.setTranslateY(-50);
         root.getChildren().add(currentTask);
         StackPane.setAlignment(currentTask, Pos.BOTTOM_CENTER);

@@ -1,8 +1,7 @@
 package com.james090500.BlockGameLauncher;
 
-import com.james090500.BlockGameLauncher.libs.BlockGameDownloader;
-import com.james090500.BlockGameLauncher.libs.LWJGLDownloader;
-import com.james090500.BlockGameLauncher.libs.LibDownloader;
+import com.james090500.BlockGameLauncher.libs.AssetDownloader;
+import com.james090500.BlockGameLauncher.libs.ClientDownloader;
 import javafx.application.Application;
 
 import java.io.File;
@@ -21,8 +20,6 @@ public class Main {
     public static String arch = System.getProperty("os.arch", "").toLowerCase(Locale.ROOT);
 
     public static Launcher launcher = new Launcher();
-    public static List<String> versions = BlockGameDownloader.listTagsNewestFirst(runDir);
-    public static String selectedVersion = "Latest";
 
     /**
      * Entry point
@@ -42,13 +39,20 @@ public class Main {
             throw new RuntimeException(e);
         }
 
-        Set<String> want = new LinkedHashSet<>(List.of("lwjgl", "lwjgl-openal", "lwjgl-opengl", "lwjgl-nanovg", "lwjgl-glfw", "lwjgl-stb"));
-        LWJGLDownloader.fetch(want, libDir);
-        LibDownloader.downloadUrl("https://repo1.maven.org/maven2/org/joml/joml/1.9.9/joml-1.9.9.jar", libDir);
-        LibDownloader.downloadUrl("https://repo1.maven.org/maven2/org/lz4/lz4-java/1.8.0/lz4-java-1.8.0.jar", libDir);
+        // Download Libs
+        try {
+            AssetDownloader.fetch(libDir);
+        } catch (IOException | InterruptedException e) {
+            throw new RuntimeException(e);
+        }
 
-        launcher.setCurrentTask("Downloading BlockGame...");
-        Path blockGame = BlockGameDownloader.downloadAssetFromTag(selectedVersion, runDir);
+        // Download Client
+        Path blockGame;
+        try {
+            blockGame = ClientDownloader.fetch(runDir);
+        } catch (IOException | InterruptedException e) {
+            throw new RuntimeException(e);
+        }
 
         launcher.setCurrentTask("Launching...");
         try {
@@ -65,7 +69,6 @@ public class Main {
 
     /**
      * Launch the game with all libs
-     * @param blockGame The path to blockgame-client.jar
      * @param runDir Run Dir
      * @param libDir Lib Dir
      */

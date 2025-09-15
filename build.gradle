@@ -1,77 +1,43 @@
 plugins {
-    id 'java'
+    id 'application'
+    id 'org.openjfx.javafxplugin' version '0.1.0'
 }
 
 repositories {
     mavenCentral()
 }
 
-/** Common (platform-agnostic) deps */
-configurations {
-    common
-    common.transitive = true
-    implementation.extendsFrom(common)
-}
-
-def jfxVersion = '21'
-def jfxPlatform = 'win'
-def platforms = ['win', 'linux', 'mac-aarch64']
-
 dependencies {
-    implementation 'com.google.code.gson:gson:2.13.1'
+    implementation 'com.google.code.gson:gson:2.13.2'
 
-    implementation "org.openjfx:javafx-base:${jfxVersion}:${jfxPlatform}"
-    implementation "org.openjfx:javafx-graphics:${jfxVersion}:${jfxPlatform}"
-    implementation "org.openjfx:javafx-controls:${jfxVersion}:${jfxPlatform}"
-    implementation "org.openjfx:javafx-media:${jfxVersion}:${jfxPlatform}"
-    implementation "org.openjfx:javafx-web:${jfxVersion}:${jfxPlatform}"
+    runtimeOnly "org.openjfx:javafx-graphics:$javafx.version:win"
+    runtimeOnly "org.openjfx:javafx-graphics:$javafx.version:linux"
+    runtimeOnly "org.openjfx:javafx-graphics:$javafx.version:mac"
 }
 
-/** Create a configuration per platform and add the JavaFX artifacts with the right classifier */
-platforms.each { plat ->
-    configurations.create("jfx_${plat}") { transitive = true }
-
-    dependencies.add("jfx_${plat}", "org.openjfx:javafx-base:${jfxVersion}:${plat}")
-    dependencies.add("jfx_${plat}", "org.openjfx:javafx-graphics:${jfxVersion}:${plat}")
-    dependencies.add("jfx_${plat}", "org.openjfx:javafx-controls:${jfxVersion}:${plat}")
-    dependencies.add("jfx_${plat}", "org.openjfx:javafx-media:${jfxVersion}:${plat}")
-    dependencies.add("jfx_${plat}", "org.openjfx:javafx-web:${jfxVersion}:${plat}")
+javafx {
+    version = "21"
+    modules = [
+            'javafx.graphics',
+            'javafx.controls',
+            'javafx.media',
+            'javafx.web',
+    ]
 }
 
-/** One fat-jar task per platform */
-platforms.each { plat ->
-    tasks.register("fatJar_${plat}", Jar) {
-        group = 'distribution'
-        description = "Builds a platform-specific fat JAR for ${plat}"
+mainClassName = 'com.james090500.BlockGameLauncher.Main'
 
-        archiveBaseName.set("blockgame-launcher")
-        archiveClassifier.set(plat)    // e.g., blockgame-launcher-win.jar
-        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-        zip64 = true                   // JavaFX jars can be chunky
+jar {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 
-        manifest {
-            attributes 'Main-Class': 'com.james090500.BlockGameLauncher.Main'
-        }
-
-        // include compiled classes/resources
-        from sourceSets.main.output
-
-        // license
-        from("./LICENSE")
-
-        // include dependencies: common + platform-specific JavaFX
-        def deps = configurations.common + configurations.getByName("jfx_${plat}")
-        from {
-            deps.collect { it.isDirectory() ? it : zipTree(it) }
-        }
-
-        // Clean up signature files that can break fat jars
-        exclude 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA'
+    manifest {
+        attributes 'Main-Class': 'com.james090500.BlockGameLauncher.Main'
+    }
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
     }
 }
 
-/** Convenience umbrella task: builds all three */
-tasks.register('fatJars') {
-    group = 'distribution'
-    dependsOn platforms.collect { "fatJar_${it}" }
+tasks.named('run') {
+    workingDir = file("./run")
 }

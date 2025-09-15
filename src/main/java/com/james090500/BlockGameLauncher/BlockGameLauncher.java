@@ -36,9 +36,7 @@ public class BlockGameLauncher extends Application {
     private double baseWidth = 854;
     private double baseHeight = 480;
 
-    private static Thread downloadThread = null;
-
-    private Group currentTask = this.createText("Click play to begin", 24);
+    private final Group currentTask = this.createText("Click play to begin", 24);
 
     @Override
     public void start(Stage stage) {
@@ -46,14 +44,13 @@ public class BlockGameLauncher extends Application {
         instance = this;
 
         stage.setTitle("BlockGame Launcher");
-        stage.minHeightProperty().bind(stage.widthProperty().multiply(0.5));
-        stage.maxHeightProperty().bind(stage.widthProperty().multiply(0.5));
+        stage.setResizable(false);
 
         Group root = new Group();
 
         WebView webView = new WebView();
         final WebEngine webEngine = webView.getEngine();
-        webEngine.load("https://blockgame.james090500.com/api/assets?platform=windows&arch=x64");
+        webEngine.load("https://blockgame.james090500.com/changelog");
         webView.setPrefWidth(baseWidth);
         webView.setPrefHeight(baseHeight - 125);
         root.getChildren().add(webView);
@@ -196,7 +193,9 @@ public class BlockGameLauncher extends Application {
         }
 
         // Download Libs
-        downloadThread = new Thread(() -> {
+        // Download Client
+        // Close launcher
+        Thread downloadThread = new Thread(() -> {
             try {
                 AssetDownloader.fetch();
             } catch (IOException | InterruptedException e) {
@@ -215,7 +214,7 @@ public class BlockGameLauncher extends Application {
 
             this.setCurrentTask("Launching...");
 
-            if(blockGame != null) {
+            if (blockGame != null) {
                 try {
                     launchGame(blockGame);
 

@@ -2,14 +2,12 @@ package com.james090500.BlockGameLauncher.libs;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
-import com.james090500.BlockGameLauncher.Main;
+import com.james090500.BlockGameLauncher.utils.EnvironmentUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
-import java.lang.reflect.Type;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -18,7 +16,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.time.Duration;
-import java.util.List;
 
 public class ClientDownloader {
 
@@ -60,7 +57,8 @@ public class ClientDownloader {
     /**
      * Downloads blockgame-client-<version>.jar from the BASE_BUILD_URL into destDir and returns path to saved file.
      */
-    public static Path fetch(Path destDir) throws IOException, InterruptedException {
+    public static Path fetch() throws IOException, InterruptedException {
+        Path destDir = EnvironmentUtils.runDir;
         String version = fetchLatestVersion();
 
         String fileName = "blockgame-client-" + version + ".jar";

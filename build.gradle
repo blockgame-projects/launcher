@@ -23,6 +23,8 @@ dependencies {
     implementation "org.openjfx:javafx-base:${jfxVersion}:${jfxPlatform}"
     implementation "org.openjfx:javafx-graphics:${jfxVersion}:${jfxPlatform}"
     implementation "org.openjfx:javafx-controls:${jfxVersion}:${jfxPlatform}"
+    implementation "org.openjfx:javafx-media:${jfxVersion}:${jfxPlatform}"
+    implementation "org.openjfx:javafx-web:${jfxVersion}:${jfxPlatform}"
 }
 
 /** Create a configuration per platform and add the JavaFX artifacts with the right classifier */
@@ -32,6 +34,8 @@ platforms.each { plat ->
     dependencies.add("jfx_${plat}", "org.openjfx:javafx-base:${jfxVersion}:${plat}")
     dependencies.add("jfx_${plat}", "org.openjfx:javafx-graphics:${jfxVersion}:${plat}")
     dependencies.add("jfx_${plat}", "org.openjfx:javafx-controls:${jfxVersion}:${plat}")
+    dependencies.add("jfx_${plat}", "org.openjfx:javafx-media:${jfxVersion}:${plat}")
+    dependencies.add("jfx_${plat}", "org.openjfx:javafx-web:${jfxVersion}:${plat}")
 }
 
 /** One fat-jar task per platform */
@@ -51,6 +55,9 @@ platforms.each { plat ->
 
         // include compiled classes/resources
         from sourceSets.main.output
+
+        // license
+        from("./LICENSE")
 
         // include dependencies: common + platform-specific JavaFX
         def deps = configurations.common + configurations.getByName("jfx_${plat}")

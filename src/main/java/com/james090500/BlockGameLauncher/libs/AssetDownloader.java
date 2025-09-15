@@ -1,5 +1,11 @@
 package com.james090500.BlockGameLauncher.libs;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import com.google.gson.stream.JsonReader;
+import com.james090500.BlockGameLauncher.BlockGameLauncher;
+import com.james090500.BlockGameLauncher.utils.EnvironmentUtils;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
@@ -13,16 +19,11 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
 
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-import com.google.gson.stream.JsonReader;
-import com.james090500.BlockGameLauncher.Main;
-
 public class AssetDownloader {
 
     private static String getAssetUrl() {
-        String arch = Main.arch;
-        String os = Main.os;
+        String arch = EnvironmentUtils.arch;
+        String os = EnvironmentUtils.os;
 
         boolean arm = arch.contains("aarch64") || arch.contains("arm64");
         boolean x64 = arch.contains("amd64") || arch.contains("x86_64");
@@ -48,8 +49,8 @@ public class AssetDownloader {
      * @throws IOException
      * @throws InterruptedException
      */
-    public static void fetch(Path destDir) throws IOException, InterruptedException {
-
+    public static void fetch() throws IOException, InterruptedException {
+        Path destDir = EnvironmentUtils.libDir;
         HttpClient client = HttpClient.newHttpClient();
 
         // Fetch JSON
@@ -73,19 +74,19 @@ public class AssetDownloader {
         List<LibFile> files = gson.fromJson(reader, listType);
 
         if (files == null || files.isEmpty()) {
-            System.out.println("No files found in JSON.");
+            BlockGameLauncher.instance.setCurrentTask("No files found in libraries JSON.");
             return;
         }
 
         for (LibFile f : files) {
             if (f == null || f.name == null || f.url == null) {
-                System.err.println("Skipping malformed entry: " + f);
+                BlockGameLauncher.instance.setCurrentTask("Skipping malformed entry: " + f);
                 continue;
             }
 
             Path out = destDir.resolve(f.name);
             if(!out.toFile().exists()) {
-                System.out.println("Downloading: " + f.name + " <- " + f.url);
+                BlockGameLauncher.instance.setCurrentTask("Downloading: " + f.name);
                 try {
                     HttpRequest fileReq = HttpRequest.newBuilder(URI.create(f.url)).GET().build();
                     HttpResponse<InputStream> fileResp = client.send(fileReq, HttpResponse.BodyHandlers.ofInputStream());
@@ -93,15 +94,15 @@ public class AssetDownloader {
                         try (InputStream in = fileResp.body()) {
                             Files.copy(in, out, StandardCopyOption.REPLACE_EXISTING);
                         }
-                        System.out.println("Saved: " + out);
+                        BlockGameLauncher.instance.setCurrentTask("Saved: " + out);
                     } else {
-                        System.err.println("Failed to download " + f.url + " : HTTP " + fileResp.statusCode());
+                        BlockGameLauncher.instance.setCurrentTask("Failed to download " + f.name + " : HTTP " + fileResp.statusCode());
                     }
                 } catch (Exception e) {
-                    System.err.println("Error downloading " + f.url + " -> " + e.getMessage());
+                    BlockGameLauncher.instance.setCurrentTask("Error downloading " + f.name + " -> " + e.getMessage());
                 }
             } else {
-                System.out.println("File in cache: " + f.name);
+                BlockGameLauncher.instance.setCurrentTask("File in cache: " + f.name);
             }
         }
     }
